@@ -4,7 +4,9 @@ import org.apache.wicket.Component;
 import org.apache.wicket.markup.html.WebPage;
 import org.apache.wicket.markup.transformer.AbstractTransformerBehavior;
 import org.apache.wicket.model.Model;
+import org.apache.wicket.request.Response;
 import org.apache.wicket.request.mapper.parameter.PageParameters;
+import org.apache.wicket.response.StringResponse;
 
 public class HomePage extends WebPage {
 	private static final long serialVersionUID = 1L;
@@ -13,7 +15,7 @@ public class HomePage extends WebPage {
 		super(parameters);
 
 		add(new PanelA("a", Model.of("panel a")));
-		PanelB b = new PanelB("b", Model.of("panel b")) {
+		PortletLike b = new PortletLike("b", Model.of("panel b")) {
 			@Override
 			protected void onRender()
 			{
@@ -25,12 +27,21 @@ public class HomePage extends WebPage {
 			@Override
 			public CharSequence transform(Component component, CharSequence output) throws Exception
 			{
-				try {
+				CharSequence result;
+				StringResponse tempResponse = new StringResponse();
+				Response oldResponse = component.getRequestCycle().setResponse(tempResponse);
+				try
+				{
 					component.internalRenderComponent();
-				} catch (Exception x) {
-					return "default content!";
+					result = tempResponse.toString();
 				}
-				return null;
+				catch (Exception x) {
+					result = "default content!";
+				} finally
+				{
+					component.getRequestCycle().setResponse(oldResponse);
+				}
+				return result;
 			}
 		});
 		add(b);
